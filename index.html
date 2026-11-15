@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Truyện AI Của Tôi</title>
+    <!-- Dùng TailwindCSS để giao diện đẹp ngay lập tức -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Dùng Marked.js để hiển thị đúng định dạng văn bản AI trả về -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: sans-serif; }
+        .loader {
+            border: 4px solid #334155; border-top: 4px solid #3b82f6;
+            border-radius: 50%; width: 30px; height: 30px;
+            animation: spin 1s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Tiêu đề -->
+        <h1 class="text-3xl font-bold text-center text-blue-400 mb-2">📖 Web Truyện AI</h1>
+        <p class="text-center text-slate-400 mb-8">Nhập câu lệnh, AI sẽ viết truyện cho bạn.</p>
+
+        <!-- Khung nhập lệnh -->
+        <div class="bg-slate-800 rounded-xl p-4 shadow-lg mb-8 border border-slate-700">
+            <textarea id="promptInput" rows="4" 
+                class="w-full bg-slate-900 text-slate-200 border border-slate-600 rounded-lg p-3 focus:outline-none focus:border-blue-500 resize-none"
+                placeholder="Ví dụ: Viết một câu chuyện trinh thám ngắn kể về một vụ mất tích bí ẩn trong thư viện cổ..."></textarea>
+            
+            <div class="flex justify-between items-center mt-4">
+                <span id="statusText" class="text-sm text-slate-400"></span>
+                <button id="generateBtn" onclick="generateStory()" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 flex items-center gap-2">
+                    <span>✨ Tạo Truyện</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Khung hiển thị truyện -->
+        <div id="storyContainer" class="bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-700 hidden">
+            <div id="storyOutput" class="prose prose-invert max-w-none text-slate-200 leading-relaxed">
+                <!-- Truyện sẽ hiện ở đây -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateStory() {
+            const promptInput = document.getElementById('promptInput').value;
+            const btn = document.getElementById('generateBtn');
+            const statusText = document.getElementById('statusText');
+            const storyContainer = document.getElementById('storyContainer');
+            const storyOutput = document.getElementById('storyOutput');
+
+            if (!promptInput.trim()) {
+                statusText.innerHTML = '<span class="text-red-400">Vui lòng nhập câu lệnh trước!</span>';
+                return;
+            }
+
+            // Cập nhật trạng thái Loading
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loader"></div> Đang viết...';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            statusText.innerText = 'AI đang suy nghĩ, vui lòng đợi 20-30 giây...';
+            storyContainer.classList.add('hidden');
+
+            try {
+                // Gọi đến Backend của bạn trên Render
+                const response = await fetch('/v1/generate-story', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptInput })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Lỗi kết nối đến bộ não AI');
+                }
+
+                const data = await response.json();
+                
+                // Hiển thị truyện (Dùng Marked để chuyển Markdown thành HTML đẹp)
+                storyOutput.innerHTML = marked.parse(data.story);
+                storyContainer.classList.remove('hidden');
+                statusText.innerText = 'Hoàn thành!';
+                
+            } catch (error) {
+                statusText.innerHTML = `<span class="text-red-400">Lỗi: ${error.message}</span>`;
+            } finally {
+                // Khôi phục nút bấm
+                btn.disabled = false;
+                btn.innerHTML = '<span>✨ Tạo Truyện</span>';
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    </script>
+</body>
+</html>
