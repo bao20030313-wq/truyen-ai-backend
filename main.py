@@ -1,20 +1,22 @@
 import os
 import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 app = FastAPI(title="Truyen AI Backend")
 
-# Lấy API Key từ biến môi trường (sẽ cài đặt trên Render ở bước sau)
+# Lấy API Key từ biến môi trường
 AION_API_KEY = os.environ.get("AION_API_KEY")
 AION_BASE_URL = "https://api.aionlabs.ai/v1"
 
 class StoryRequest(BaseModel):
     prompt: str
 
+# --- MỚI: Trả về giao diện index.html khi vào trang chủ ---
 @app.get("/")
 def read_root():
-    return {"status": "Bộ não đang chạy!", "service": "Truyen AI Backend"}
+    return FileResponse("index.html")
 
 @app.get("/health")
 def health_check():
